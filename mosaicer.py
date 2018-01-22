@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 path_to_image = '/home/someuser/some_image.jpg'  # Path to your image for transformation
 
-gender = 'female'  # you can set 'male' or 'female'
+gender = 'female'  # you can set to 'male' or 'female'
 pages = 10  # save 56 photos for every porhnub page. More is better, but slower
 
 # Set False, if you run that script not for the first time and all photos are downloaded
@@ -44,7 +44,7 @@ current_page = 0
 # --------------------------- FUNCTIONS ---------------------------
 
 
-# Progress bar function, I borrowed it from StuckOverflow
+# Progress bar function, I borrowed it from Stack Overflow
 def progress(count, total, status=''):
 
     bar_len = 40
