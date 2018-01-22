@@ -2,8 +2,8 @@
 Application for creating image, that consists of small images (thumbnails) of porn actors.
 You must set path to target image, also you can choose gender of actors, chunks size and thumbnails size.
 
-In comments word 'chunk' means part of original image, that is replacing by thumbnail.
-The best size ratio of chunk and thumbnail 1:10, e.g. 6x8:60x80
+Word 'chunk' means part of original image, that is replacing by thumbnail.
+The best size ratio of chunk and thumbnail is 1:10, e.g. 6x8:60x80
 """
 
 import os
@@ -16,14 +16,14 @@ from urllib.request import urlretrieve
 from urllib.error import URLError
 from bs4 import BeautifulSoup
 
-path_to_image = '/home/immo/Pictures/roj.jpg'  # Path to your image for transformation
+path_to_image = '/home/someuser/some_image.jpg'  # Path to your image for transformation
 
 gender = 'female'  # you can set 'male' or 'female'
-pages = 5  # save 56 photos for every porhnub page. More is better, but slower
+pages = 10  # save 56 photos for every porhnub page. More is better, but slower
 
 # Set False, if you run that script not for the first time and all photos are downloaded
 # It will save your time from redownloading photos and creating thumbnails
-download_stuff = True
+download_photos = True
 
 # Recommended 6 and 8
 chunk_width = 6
@@ -38,6 +38,8 @@ path = os.getcwd()
 path_photos = path+'/just_for_science/'
 path_thumbs = path_photos + 'thumbs/'
 
+# For possible error 'connection reset by peer'
+current_page = 0  
 
 # --------------------------- FUNCTIONS ---------------------------
 
@@ -56,12 +58,12 @@ def progress(count, total, status=''):
     sys.stdout.flush()
 
 
-# Open pornhub and gather photos, save them in the folder 'just_for_science'
-def save_photos(till_page):
+# Open pornhub and gather photos, save them to the folder 'just_for_science'
+def save_photos(end_page):
 
     global current_page
-
-    for j in range(current_page, till_page):
+    
+    for j in range(current_page, end_page):
 
         for b in range(1):
             a = urlopen('https://www.pornhub.com/pornstars?gender='+gender+'&page='+str(j))
@@ -75,7 +77,7 @@ def save_photos(till_page):
             for i in links:
                 if 'src' in i.attrs.keys():
                     src = i.attrs['src']
-                    if 'pornstars' in src:
+                    if 'pornstars' in src:  # Link to pornstar with image. Exactly, what we need
                         stars.append(src)
 
             for i in range(len(stars)):
@@ -223,10 +225,8 @@ def pure_art(data, aver):
 # Create folders
 os.makedirs(path_thumbs, exist_ok=True)
 
-current_page = 0  # For possible error 'connection reset by peer'
-
 # Save all necessary files and create thumbnails
-if download_stuff:
+if download_photos:
 
     while current_page < pages:
         try:
