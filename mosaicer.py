@@ -77,7 +77,7 @@ def save_photos(end_page):
             for i in links:
                 if 'src' in i.attrs.keys():
                     src = i.attrs['src']
-                    if 'pornstars' in src:  # Link to pornstar with image. Exactly, what we need
+                    if 'pornstars' in src:  # Link to pornstar's page with image. Exactly what we need
                         stars.append(src)
 
             for i in range(len(stars)):
@@ -225,7 +225,7 @@ def pure_art(data, aver):
 # Create folders
 os.makedirs(path_thumbs, exist_ok=True)
 
-# Save all necessary files and create thumbnails
+# Download photos and create thumbnails
 if download_photos:
 
     while current_page < pages:
