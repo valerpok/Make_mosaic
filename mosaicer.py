@@ -1,6 +1,9 @@
 """
 Application for creating image, that consists of small images (thumbnails) of porn actors.
 You must set path to target image, also you can choose gender of actors, chunks size and thumbnails size.
+
+In comments word 'chunk' means part of original image, that is replacing by thumbnail.
+The best size ratio of chunk and thumbnail 1:10, e.g. 6x8:60x80
 """
 
 import os
@@ -53,7 +56,7 @@ def progress(count, total, status=''):
     sys.stdout.flush()
 
 
-# Opens pornhub and gathers photos, saves them in the folder 'just_for_science'
+# Open pornhub and gather photos, save them in the folder 'just_for_science'
 def save_photos(till_page):
 
     global current_page
@@ -84,7 +87,7 @@ def save_photos(till_page):
     print('\nPhotos downloading complete!')
 
 
-# Creates thumbnails for saved pictures with some size, saves them in 'just_for_science/thumbs'
+# Create thumbnail for saved pictures with some size, save them in 'just_for_science/thumbs'
 def create_thumbs(width, height):
 
     size = [width, height]
@@ -107,7 +110,7 @@ def create_thumbs(width, height):
     print('\nThumbnails created!')
 
 
-# Finds the average color of given pixel array
+# Find the average color of given pixel array
 def find_mean_RGB(pixels):
 
     reds = []
@@ -124,7 +127,7 @@ def find_mean_RGB(pixels):
     return r, g, b
 
 
-# Creates matrix of pixels
+# Create matrix of pixels
 def get_matrix(im, xr, yr):
     pixels = []
     for x in range(xr, xr+chunk_width):
@@ -133,36 +136,25 @@ def get_matrix(im, xr, yr):
     return pixels
 
 
-# Paints chunk of image in one, average, color
+# Paint chunk of image in one — average — color
 def set_color(color, xstart, ystart):
     for x in range(xstart, xstart+chunk_width):
         for y in range(ystart, ystart+chunk_height):
             im.putpixel((x, y), color)
 
 
-# Returns four closest pictures by average RGB
-def closest_pic(aver, color):
-
-    pal = aver.keys()
-    close = sorted(pal, key=lambda x: (abs(color[0]-x[0]) +
-                                       abs(color[1]-x[1] +
-                                       abs(color[2]-x[2])))/3)
-    return close[:4]
-
-
-# Creates dir with average colors as keys and photos as values
+# Create dictionary with average colors as keys and photos as values
 def create_palette():
-
     palette = {}
-    glb = glob.glob(path_thumbs+"*.thumbnail")
+    glb = glob.glob(path_thumbs + "*.thumbnail")
 
     counter = 0
 
     for infile in glb:
 
         progress(counter, len(glb), status='creating palette')
-        counter +=1 
-        
+        counter += 1
+
         im = Image.open(infile)
         color = []
 
@@ -173,41 +165,55 @@ def create_palette():
         avr_color = find_mean_RGB(color)
         palette[avr_color] = infile
 
-    print('\nPalette created.')
+    print('\nPalette created. ')
 
     return palette
 
 
-# Returns new image, consisting of photos thumbnails
+# Find four closest pictures by average RGB
+def closest_pic(aver, color):
+
+    pal = aver.keys()
+
+    # Sort by mean difference between chunk color and color of palette's items
+    close = sorted(pal, key=lambda x: (abs(color[0]-x[0]) +
+                                       abs(color[1]-x[1] +
+                                       abs(color[2]-x[2])))/3)
+
+    return close[:4]  # Four images to decrease level of repeats
+
+
+# Return new image, consisting of photos' thumbnails
 def pure_art(data, aver):
-    
+
+    # Create new image
     nim = Image.new('RGB', (len(data[0])*thumb_width, len(data)*thumb_height), 'white')
 
-    counter = 0
+    counter = 0  # for progress bar
 
-    for row in range(len(data)):
+    for row in range(len(data)):  # go through rows of chunks
 
         progress(counter, len(data), status='creating image')
         counter += 1
 
-        tail = [0, 0, 0, 0]
+        tail = [0, 0, 0, 0]  # four last pasted images
 
-        for i in range(len(data[row])):
+        for i in range(len(data[row])):  # go through lines of chunks
 
-            pics = closest_pic(aver, data[row][i])
-            pic = Image.open(aver[pics[0]])
-                                             
-            nim.paste(pic, (i*thumb_width, row*thumb_height))
-            tail.insert(0, pic)
-            tail.pop()
+            pics = closest_pic(aver, data[row][i])  # find four closest to chunk color thumbnails
+            pic = Image.open(aver[pics[0]])  # open the most close thumbnail
+
+            nim.paste(pic, (i * thumb_width, row * thumb_height))  # paste image
+            tail.insert(0, pic)  # add image to tail
+            tail.pop()  # remove 5th tail's picture
 
             # Check for identical pictures
+            # If all four pictures is identical, randomly change one in random position
             if tail.count(tail[0]) == 4:
-                pic = Image.open(aver[rn.choice(pics[1:])])
-                position = rn.choice((0, 1, 2, 3))
-                nim.paste(pic, (i*thumb_width-thumb_width*position, row*thumb_height))
-                tail[3-position] = pic
-
+                pic = Image.open(aver[rn.choice(pics[1:])])  # change for another picture
+                position = rn.choice(range(4))  # choose position for changing
+                nim.paste(pic, (i * thumb_width - thumb_width * position, row * thumb_height))
+                tail[3 - position] = pic
 
     return nim
 
@@ -226,30 +232,30 @@ if download_stuff:
         try:
             save_photos(pages)
         except URLError:
-            print("\n I've caught error and try to reconnect")
+            print("\n I've caught error and try to reconnect. ")
 
     create_thumbs(thumb_width, thumb_height)
 
 im = Image.open(path_to_image)  # Open image for transformation
-size_x, size_y = im.size
+size_w, size_h = im.size
 
 palette = create_palette()
 
 # Chunking original image and creating data-list
 chunks = []
-for y in range(0, size_y-(size_y % chunk_height), chunk_height):
+for y in range(0, size_h-(size_h % chunk_height), chunk_height):
 
-    progress(y, size_y, status='Chunking image')
+    progress(y, size_h, status='Chunking image')
     row = []
 
-    for x in range(0, size_x-(size_x % chunk_width), chunk_width):
+    for x in range(0, size_w-(size_w % chunk_width), chunk_width):
         pixels = get_matrix(im, x, y)
         set_color((find_mean_RGB(pixels)), x, y)
         row.append(find_mean_RGB(pixels))
 
     chunks.append(row)
 
-print('\nchunked!')
+print('\nChunked! ')
 im.show()
 
 # Creating new image
